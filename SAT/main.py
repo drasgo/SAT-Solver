@@ -1,6 +1,14 @@
 import sys
 import os
 
+def execute_main(args):
+    technique_number, input_file = grab_input_parameters(args)
+    check_file_exists(input_file)
+    dimacs_input = remove_comments(read_DIMACS_input_file(input_file))
+    variables, clauses, dimacs_input = variables_and_clauses(dimacs_input)
+    logic = convert_DIMACS_to_logic(dimacs_input)
+    print(logic)
+
 def grab_input_parameters(args: list):
     tech = None
     if "--help" in args:
@@ -89,9 +97,5 @@ def convert_DIMACS_to_logic(dimacs: str) -> str:
     return converted_logic
 
 if __name__ == "__main__":
-    technique_number, input_file = grab_input_parameters(sys.argv)
-    check_file_exists(input_file)
-    dimacs_input = remove_comments(read_DIMACS_input_file(input_file))
-    variables, clauses, dimacs_input = variables_and_clauses(dimacs_input)
-    logic = convert_DIMACS_to_logic(dimacs_input)
-    print(logic)
+    execute_main(sys.argv)
+    exit()
