@@ -3,20 +3,26 @@ import os
 from SAT.DIMACS_decoder import Formula
 
 
-def execute_main(args):
+def execute_main(args: list):
     technique_number, input_file = grab_input_parameters(args)
     check_file_exists(input_file)
     formula = Formula(read_DIMACS_input_file(input_file))
-    print(formula.to_string())
-    print("\n")
-    input()
-    print(len(formula.disjunctions))
 
-    print("\n")
-    input()
-    for dis in formula.disjunctions:
-        input()
-        print(len(dis.literals))
+    if technique_number == 0:
+        from SAT.DPLL import DPLL_Solver
+        solver = DPLL_Solver(formula)
+    elif technique_number == 1:
+        from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
+        solver = Base_SAT_Heuristic_Solver(formula)
+    elif technique_number == 2:
+        from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
+        solver = Base_SAT_Heuristic_Solver(formula)
+    else:
+        print("Number " + str(technique_number) + " not recognized. Check --help for more informations.")
+        exit()
+
+    solver.compute()
+    print(solver.get_result())
 
 
 def grab_input_parameters(args: list):
@@ -40,10 +46,12 @@ def grab_input_parameters(args: list):
         print("-S+number and/or input file path missing")
     exit()
 
+
 def check_file_exists(file_path: str):
     if not os.path.exists(file_path):
         print("File " + file_path + " does not exist!")
         exit()
+
 
 def read_DIMACS_input_file(file_path: str) -> str:
     with open(file_path, "r") as fp:
