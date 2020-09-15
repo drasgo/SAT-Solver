@@ -6,5 +6,5 @@ class Base_SAT_Heuristic_Solver:
     def compute(self) -> bool:
         pass
 
-    def get_result(self) -> list:
-        return self.result
+    def get_result(self) -> str:
+        return " ".join(self.result).strip()

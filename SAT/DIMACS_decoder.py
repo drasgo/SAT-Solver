@@ -4,10 +4,8 @@ class Formula:
         formula = self.remove_comments(formula)
         self.num_variables, self.num_clauses, formula = self.variables_and_clauses(formula)
         self.str_formula = self.convert_DIMACS_to_str(formula)
-        print(self.str_formula)
-        print("\n\n")
-        input()
         self.convert_to_logic()
+        self.variables = self.get_variables()
 
     @staticmethod
     def remove_comments(formula: str) -> str:
@@ -85,11 +83,29 @@ class Formula:
     def get_disjunctions(self) -> list:
         return self.disjunctions
 
-    def compute_formula(self, values: list) -> bool:
-        if len(self.disjunctions) == len(values):
-            if all(disjunction.compute_disjunction(value) is True for disjunction, value in zip(self.disjunctions, values)):
+    def get_variables(self) -> list:
+        temp_vars = set()
+        for disj in self.disjunctions:
+            for lit in disj.get_literals():
+                temp_vars.add(lit.get_name())
+        return list(temp_vars)
+
+    def compute_formula(self, values: dict) -> bool:
+        if len(values) == self.num_variables:
+            if all(disjunction.compute_disjunction(values) is True for disjunction in self.disjunctions):
                 return True
         return False
+
+    def return_unit_clauses_variable(self, guessed_variables: list) -> dict:
+        unit_clauses = {}
+        # if len(guessed_variables) > 0:
+        for disj in self.disjunctions:
+            missing = [lit for lit in disj.literals if lit not in guessed_variables]
+            # print("***")
+            # print(missing)
+            if len(missing) == 1:
+                unit_clauses[missing[0].get_name()] = True if disj.literals[disj.literals.index(missing[0])].get_value(True) is True else False
+        return unit_clauses
 
 
 class Disjunction:
@@ -114,11 +130,14 @@ class Disjunction:
     def get_literals(self) -> list:
         return self.literals
 
-    def compute_disjunction(self, values: list) -> bool:
-        if len(self.literals) == len(values):
-            if any(literal.get_value(value) is True for literal, value in zip(self.literals, values)):
+    def compute_disjunction(self, values: dict) -> bool:
+        if all(value in [lit.get_name() for lit in self.literals] for value in values):
+            if any(literal.get_value(values[literal.get_name()]) is True for literal in self.literals):
                 return True
-        return False
+            return False
+        else:
+            print("Variable(s) not in disjunction " + self.to_string())
+            return False
 
 
 class Literal:
@@ -129,6 +148,9 @@ class Literal:
 
     def to_string(self) -> str:
         return ("" if self.positive is True else "-") + self.name
+
+    def get_name(self):
+        return self.name
 
     def get_value(self, boolean: bool) -> bool:
         if self.positive:

@@ -5,16 +5,17 @@ from SAT.DIMACS_decoder import Formula
 
 def execute_main(args: list):
     technique_number, input_file = grab_input_parameters(args)
+    result_file_path = "./" + input_file[input_file.rfind("/"):input_file.rfind(".")] + ".out"
     check_file_exists(input_file)
     formula = Formula(read_DIMACS_input_file(input_file))
 
-    if technique_number == 0:
+    if technique_number == 1:
         from SAT.DPLL import DPLL_Solver
         solver = DPLL_Solver(formula)
-    elif technique_number == 1:
+    elif technique_number == 2:
         from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
         solver = Base_SAT_Heuristic_Solver(formula)
-    elif technique_number == 2:
+    elif technique_number == 3:
         from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
         solver = Base_SAT_Heuristic_Solver(formula)
     else:
@@ -24,14 +25,17 @@ def execute_main(args: list):
     solver.compute()
     print(solver.get_result())
 
+    with open(result_file_path, "w") as fp:
+        fp.write(solver.get_result())
+
 
 def grab_input_parameters(args: list):
     tech = None
     if "--help" in args:
         print("""SAT solver written in Python. Commands available:
-                    \t-S0 : DPLNN
-                    \t-S1 : ???
+                    \t-S1 : DPLNN
                     \t-S2 : ???
+                    \t-S3 : ???
                     Example command: main.py -S1 "input_file_path" """)
 
     elif len(args) >= 3:
