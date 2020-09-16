@@ -1,10 +1,13 @@
 class Formula:
-    def __init__(self, formula: str):
+    def __init__(self, formula: str="", disjunctions=None):
         self.disjunctions = []
-        formula = self.remove_comments(formula)
-        self.num_variables, self.num_clauses, formula = self.variables_and_clauses(formula)
-        self.str_formula = self.convert_DIMACS_to_str(formula)
-        self.convert_to_logic()
+        if disjunctions is None:
+            formula = self.remove_comments(formula)
+            self.num_variables, self.num_clauses, formula = self.variables_and_clauses(formula)
+            self.str_formula = self.convert_DIMACS_to_str(formula)
+            self.convert_to_logic()
+        else:
+            self.disjunctions = disjunctions
         self.variables = self.get_variables()
 
     @staticmethod
@@ -123,7 +126,8 @@ class Formula:
 class Disjunction:
     def __init__(self, elements: str):
         self.literals = []
-        self.convert_to_logic(elements)
+        if elements != "":
+            self.convert_to_logic(elements)
 
     def convert_to_logic(self, elements: str):
         for literal in Disjunction.string_to_disjunctions(elements.translate(str.maketrans("", "", "()"))):

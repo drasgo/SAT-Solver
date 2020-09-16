@@ -22,8 +22,10 @@ def execute_main(args: list):
         print("Number " + str(technique_number) + " not recognized. Check --help for more informations.")
         exit()
 
+
+
     solver.compute()
-    print(solver.get_result())
+    # print(solver.get_result())
 
     with open(result_file_path, "w") as fp:
         fp.write(solver.get_result())
