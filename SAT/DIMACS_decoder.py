@@ -91,20 +91,32 @@ class Formula:
         return list(temp_vars)
 
     def compute_formula(self, values: dict) -> bool:
-        if len(values) == self.num_variables:
+        # print("values: " + str(len(values)) + ", num_vars: " + str(len(self.variables)))
+        if len(values) == len(self.variables):
+
             if all(disjunction.compute_disjunction(values) is True for disjunction in self.disjunctions):
                 return True
         return False
 
-    def return_unit_clauses_variable(self, guessed_variables: list) -> dict:
+    def return_unit_clauses_variable(self, guessed_variables: dict) -> dict:
         unit_clauses = {}
-        # if len(guessed_variables) > 0:
+
         for disj in self.disjunctions:
-            missing = [lit for lit in disj.literals if lit not in guessed_variables]
-            # print("***")
-            # print(missing)
+            missing = [lit for lit in disj.literals if lit.get_name() not in guessed_variables]
+
             if len(missing) == 1:
-                unit_clauses[missing[0].get_name()] = True if disj.literals[disj.literals.index(missing[0])].get_value(True) is True else False
+                temp_disj = [lit for lit in disj.literals if lit.get_name() in guessed_variables]
+
+                if all(lit.get_name() not in guessed_variables or
+                       (lit.get_name() in guessed_variables and
+                       lit.get_value(guessed_variables[lit.get_name()]) is False)
+                       for lit in temp_disj):
+                    unit_clauses[missing[0].get_name()] = True if disj.literals[
+                                                                      disj.literals.index(missing[0])].get_value(
+                        True) is True else False
+                else:
+                    unit_clauses[missing[0].get_name()] = None
+
         return unit_clauses
 
 
@@ -131,12 +143,12 @@ class Disjunction:
         return self.literals
 
     def compute_disjunction(self, values: dict) -> bool:
-        if all(value in [lit.get_name() for lit in self.literals] for value in values):
+        if all(lit.get_name() in values for lit in self.literals):
             if any(literal.get_value(values[literal.get_name()]) is True for literal in self.literals):
                 return True
             return False
         else:
-            print("Variable(s) not in disjunction " + self.to_string())
+            print("Variable(s) not in disjunction " + self.to_string() + " != " +str(values.keys()))
             return False
 
 
@@ -152,7 +164,7 @@ class Literal:
     def get_name(self):
         return self.name
 
-    def get_value(self, boolean: bool) -> bool:
+    def get_value(self, boolean: bool = True) -> bool:
         if self.positive:
             return boolean
         else:
