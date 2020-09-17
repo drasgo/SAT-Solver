@@ -41,7 +41,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
         print("Finished lookup.")
         print("Number of recursions: " + str(self.counter))
-        print("Time passed: " + str(delta_time))
+        print("Time passed: " + str(round(delta_time, 2)))
         print("Number of known literals: " + str(len([var for var in self.formula.disjunctions if len(var.literals) == 1])))
         return flag
 
@@ -60,7 +60,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
     def dpll_recursive(self, disjunctions: str, chosen_literal: list, curr_result: dict):
         # chosen_literal = [literal_name, literal_value]
-        self.counter += self.counter
+        self.counter += 1
         new_formula = Formula(str_logic=disjunctions)
 
         simplified_literals = self.check_pure_literals(new_formula.disjunctions, new_formula.variables)
