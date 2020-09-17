@@ -40,9 +40,11 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
             print("fuck")
 
         print("Finished lookup.")
+        print("**********")
         print("Number of recursions: " + str(self.counter))
         print("Time passed: " + str(round(delta_time, 2)) + " seconds")
         print("Number of known literals: " + str(len([var for var in self.formula.disjunctions if len(var.literals) == 1])))
+        print("**********")
         return flag
 
     @staticmethod
