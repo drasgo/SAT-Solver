@@ -1,7 +1,6 @@
 from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
-from collections import OrderedDict
-import copy
-from SAT.DIMACS_decoder import Formula, Disjunction
+from SAT.DIMACS_decoder import Formula
+import time
 
 
 class DPLL_Solver(Base_SAT_Heuristic_Solver):
@@ -24,10 +23,12 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         """
         self.formula = self.check_tautology(self.formula)
         # print(self.formula.to_string())
-        flag = self.dpll_recursive(self.formula.to_string(), [self.formula.variables[0], False], {})
+        start_time = time.perf_counter()
 
+        flag = self.dpll_recursive(self.formula.to_string(), [self.formula.variables[0], False], {})
         if flag is False:
             flag = self.dpll_recursive(self.formula.to_string(),[self.formula.variables[0], True], {})
+        delta_time = time.perf_counter() - start_time
 
         print("double check")
         for elem in self.formula.variables:
@@ -37,7 +38,11 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
             print("good double check")
         else:
             print("fuck")
-        print("finished lookup. exiting")
+
+        print("Finished lookup.")
+        print("Number of recursions: " + str(self.counter))
+        print("Time passed: " + str(delta_time))
+        print("Number of known literals: " + str(len([var for var in self.formula.disjunctions if len(var.literals) == 1])))
         return flag
 
     @staticmethod
@@ -55,25 +60,28 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
     def dpll_recursive(self, disjunctions: str, chosen_literal: list, curr_result: dict):
         # chosen_literal = [literal_name, literal_value]
-
+        self.counter += self.counter
         new_formula = Formula(str_logic=disjunctions)
-        # curr_result[chosen_literal[0]] = chosen_literal[1]
-        # current_disjunctions = disjunctions.copy()
-        simplified_literals = self.check_pure_literals(new_formula.disjunctions, new_formula.variables)
 
+        simplified_literals = self.check_pure_literals(new_formula.disjunctions, new_formula.variables)
         if len(simplified_literals) == 0:
-            # print("no pure literals")
             simplified_literals = self.check_unit_clauses(new_formula.disjunctions)
 
-        if len(simplified_literals) == 0:
-            # print("no unit clauses")
-            curr_result[chosen_literal[0]] = chosen_literal[1]
-
-        else:
+        while len(simplified_literals) != 0:
+            # print(simplified_literals)
             curr_result.update(simplified_literals)
 
+            new_formula.disjunctions = DPLL_Solver.shorten_formula(new_formula.disjunctions, curr_result)
+            new_formula.disjunctions = DPLL_Solver.remove_clauses(new_formula.disjunctions, curr_result)
+
+            simplified_literals = DPLL_Solver.check_pure_literals(new_formula.disjunctions, new_formula.get_variables())
+            if len(simplified_literals) == 0:
+                simplified_literals = DPLL_Solver.check_unit_clauses(new_formula.disjunctions)
+
+        curr_result[chosen_literal[0]] = chosen_literal[1]
         new_formula.disjunctions = DPLL_Solver.shorten_formula(new_formula.disjunctions, curr_result)
         new_formula.disjunctions = DPLL_Solver.remove_clauses(new_formula.disjunctions, curr_result)
+        next_literal = [var for var in new_formula.variables][0]
 
         print("missing " + str(len(new_formula.disjunctions)) + " clauses")
         if len(new_formula.disjunctions) == 0:
@@ -88,14 +96,10 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
             return False
 
         # Compute the method recursively (first with the negated literal and then with the positive literal
-        if len(simplified_literals) == 0:
-            next_literal = [var for var in new_formula.variables][0]
-            if self.dpll_recursive(new_formula.to_string(), [next_literal, False], curr_result.copy()) is True:
-                return True
-            return self.dpll_recursive(new_formula.to_string(), [next_literal, True], curr_result.copy())
 
-        else:
-            return self.dpll_recursive(new_formula.to_string(), chosen_literal, curr_result.copy())
+        if self.dpll_recursive(new_formula.to_string(), [next_literal, False], curr_result.copy()) is True:
+            return True
+        return self.dpll_recursive(new_formula.to_string(), [next_literal, True], curr_result.copy())
 
     @staticmethod
     def check_pure_literals(disjunctions, variables):
@@ -135,7 +139,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         for disjunction in disjunctions:
             if len(disjunction.literals) == 1:
                 unit_variables[disjunction.literals[0].get_name()] = disjunction.literals[0].positive
-                # print("unit clause " + disjunction.literals[0].get_name() + " found with value " + str(disjunction.literals[0].positive))
+
         return unit_variables
 
     @staticmethod

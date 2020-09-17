@@ -147,6 +147,9 @@ class Disjunction:
         if all(lit.get_name() in values for lit in self.literals):
             if any(literal.get_value(values[literal.get_name()]) is True for literal in self.literals):
                 return True
+            else:
+                print("false disjunction")
+                print(self.to_string())
             return False
         else:
             print("Variable(s) not in disjunction " + self.to_string() + " != " +str(values.keys()))
