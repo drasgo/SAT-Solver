@@ -2,6 +2,7 @@ class Base_SAT_Heuristic_Solver:
     def __init__(self, formula):
         self.formula = formula
         self.counter = 0
+        self.number_backtracking = 0
         self.result = {}
 
     def compute(self) -> bool:

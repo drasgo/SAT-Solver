@@ -41,7 +41,9 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
         print("Finished lookup.")
         print("**********")
+        print("Satisfiable" if flag is True else "Unsatisfiable")
         print("Number of recursions: " + str(self.counter))
+        print("Number of backtracking: " + str(self.number_backtracking))
         print("Time passed: " + str(round(delta_time, 2)) + " seconds")
         print("Number of known literals: " + str(len([var for var in self.formula.disjunctions if len(var.literals) == 1])))
         print("**********")
@@ -92,7 +94,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
             #       + " (current value: " + str(curr_result[chosen_literal[0]]) + ")")
 
         # Gets new literal from the formula
-        print("After " + str(len(new_formula.disjunctions)) + " clauses.  Num of known literals: " + str(len(curr_result)) + "\n")
+        print("Number of clauses after " + str(len(new_formula.disjunctions)) + " clauses.  Num of known literals: " + str(len(curr_result)) + "\n")
 
         if len(new_formula.disjunctions) == 0:
             # Check if formula is empty
@@ -103,6 +105,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         if any(len(elem.literals) == 0 for elem in new_formula.disjunctions):
             # Check if there is any empty clauses
             print("error")
+            self.number_backtracking += 1
             return False
 
         new_variables = new_formula.get_variables()
