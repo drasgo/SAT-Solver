@@ -10,25 +10,13 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
     def compute(self) -> bool:
         """
         Computes DPLL algorithm
-        The basic idea of the algorithm is:
-    1. "Guess" a variable
-    2. Find all unit clauses created from the last assignment and assign the needed value
-    3. Iteratively retry step 2 until there is no change (found transitive closure)
-    4. If the current assignment cannot yield true for all clauses - fold back from recursion
-    and retry a different assignment
-    5. If it can - "guess" another variable (recursively invoke and return to 1)
-    Termination:
-    1. There is nowhere to go "back to" and change a "guess" (no solution)
-    2. All clauses are satisfied (there is a solution, and the algorithm found it)
         """
         self.formula = self.check_tautology(self.formula)
-        # print(self.formula.to_string())
-        start_time = time.perf_counter()
+        self.starting_time = time.perf_counter()
 
         flag = self.dpll_recursive(self.formula.to_string(), [self.formula.variables[0], False], {}, self.counter)
         if flag is False:
             flag = self.dpll_recursive(self.formula.to_string(),[self.formula.variables[0], True], {}, self.counter)
-        delta_time = time.perf_counter() - start_time
 
         print("Counter proof:")
         for elem in self.formula.variables:
@@ -39,14 +27,8 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         else:
             print("fuck")
 
-        print("Finished lookup.")
-        print("**********")
-        print("Satisfiable" if flag is True else "Unsatisfiable")
-        print("Number of recursions: " + str(self.counter))
-        print("Number of backtracking: " + str(self.number_backtracking))
-        print("Time passed: " + str(round(delta_time, 2)) + " seconds")
-        print("Number of known literals: " + str(len([var for var in self.formula.disjunctions if len(var.literals) == 1])))
-        print("**********")
+        print("Finished lookup.\n")
+        self.summary_information(flag)
         return flag
 
     @staticmethod
@@ -71,7 +53,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         # Create a new formula from the string disjunctions
         new_formula = Formula(str_logic=disjunctions)
         # Used for debugging for looking at the number of clauses before modification
-        print("*Recursion n°: " + str(recursion_index) + ". Number of clauses bef.: " + str(len(new_formula.disjunctions))
+        print("* Recursion n°: " + str(recursion_index) + ". Number of clauses bef.: " + str(len(new_formula.disjunctions))
               + " Curr literal " + chosen_literal[0])
 
         # First iteration for check of pure literals or unit clauses
@@ -89,10 +71,6 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         if chosen_literal[0] not in curr_result:
             curr_result[chosen_literal[0]] = chosen_literal[1]
             new_formula, curr_result = DPLL_Solver.simplifications(new_formula, curr_result)
-        # else:
-            # print("literal " + chosen_literal[0] + " already in curr_results with value " + str(chosen_literal[1])
-            #       + " (current value: " + str(curr_result[chosen_literal[0]]) + ")")
-
         # Gets new literal from the formula
         print("Number of clauses after " + str(len(new_formula.disjunctions)) + " clauses.  Num of known literals: " + str(len(curr_result)) + "\n")
 
@@ -133,78 +111,3 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
                 break
             curr_result.update(simplified_literals)
         return new_formula, curr_result
-
-    @staticmethod
-    def check_pure_literals(disjunctions, variables):
-        """check for pure literals in formula"""
-        pure_variables = {}
-        # do iteration over difference between all variables and curr_result
-        for variable in variables:
-            if all(
-                variable != var.get_name() or
-                (variable == var.get_name() and
-                var.positive is False)
-                for disjunction in disjunctions
-                for var in disjunction.literals
-            ):
-                # If all variables with the same name are False
-                # print("pure literal " + variable + " found with value " + str(False))
-                pure_variables[variable] = False
-
-            elif all(
-                variable != var.get_name() or
-                (variable == var.get_name() and
-                var.positive is True)
-                for disjunction in disjunctions
-                for var in disjunction.literals
-            ):
-                # If all variables with the same name are True
-                # print("pure literal " + variable + " found with value " + str(True))
-                pure_variables[variable] = True
-
-        return pure_variables
-
-    @staticmethod
-    def check_unit_clauses(disjunctions):
-        """check for unit clauses"""
-        unit_variables = {}
-
-        for disjunction in disjunctions:
-            if len(disjunction.literals) == 1:
-                unit_variables[disjunction.literals[0].get_name()] = disjunction.literals[0].positive
-
-        return unit_variables
-
-    @staticmethod
-    def shorten_formula(disjunctions, chosen_literal: dict):
-        """shorten clauses in formula containing negative literal"""
-        for disjunction in disjunctions:
-            removed_literals = []
-            for literal in disjunction.literals:
-                if any(
-                        literal.get_name() == lit and
-                        literal.get_value(chosen_literal[lit]) is False
-                        for lit in chosen_literal
-                       ):
-                    removed_literals.append(literal)
-
-            for lit in removed_literals:
-                disjunction.literals.remove(lit)
-        return disjunctions
-
-    @staticmethod
-    def remove_clauses(disjunctions, chosen_literal: dict):
-        """remove clauses in formula containing positive literal"""
-        removed_clauses = []
-        for disjunction in disjunctions:
-            if any(
-                    literal.get_name() == lit and
-                    literal.get_value(chosen_literal[lit]) is True
-                    for literal in disjunction.literals
-                    for lit in chosen_literal
-            ):
-                removed_clauses.append(disjunction)
-
-        for disj in removed_clauses:
-            disjunctions.remove(disj)
-        return disjunctions
