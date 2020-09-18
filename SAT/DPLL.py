@@ -31,19 +31,6 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         self.summary_information(flag)
         return flag
 
-    @staticmethod
-    def check_tautology(formula):
-        """Check for tautologies in formula and removes clauses when tautologies appear"""
-        for disjunction in formula.disjunctions[:]:
-            if any(
-                   lit1.get_name() == lit2.get_name() and
-                   lit1.get_value(True) is not lit2.get_value(True)
-                   for lit1 in disjunction.literals
-                   for lit2 in disjunction.literals
-            ):
-                formula.disjunctions.remove(disjunction)
-        return formula
-
     def dpll_recursive(self, disjunctions: str, chosen_literal: list, curr_result: dict, recursion_index):
         # chosen_literal = [literal_name, literal_value]
         # Used for keeping track of the current recursion index

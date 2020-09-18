@@ -25,6 +25,23 @@ class Base_SAT_Heuristic_Solver:
         print("**********")
 
     @staticmethod
+    def check_tautology(formula):
+        """Check for tautologies in formula and removes clauses when tautologies appear"""
+        removed_disjunctions = []
+        for disjunction in formula.disjunctions:
+            if any(
+                    lit1.get_name() == lit2.get_name() and
+                    lit1.get_value(True) is not lit2.get_value(True)
+                    for lit1 in disjunction.literals
+                    for lit2 in disjunction.literals
+            ):
+                removed_disjunctions.append(disjunction)
+
+        for disjunction in removed_disjunctions:
+            formula.disjunctions.remove(disjunction)
+        return formula
+
+    @staticmethod
     def check_pure_literals(disjunctions, variables):
         """check for pure literals in formula"""
         pure_variables = {}

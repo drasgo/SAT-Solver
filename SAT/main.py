@@ -13,8 +13,8 @@ def execute_main(args: list):
         from SAT.DPLL import DPLL_Solver
         solver = DPLL_Solver(formula)
     elif technique_number == 2:
-        from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
-        solver = Base_SAT_Heuristic_Solver(formula)
+        from SAT.CDCL import CDCL_Solver
+        solver = CDCL_Solver(formula)
     elif technique_number == 3:
         from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
         solver = Base_SAT_Heuristic_Solver(formula)
@@ -22,11 +22,7 @@ def execute_main(args: list):
         print("Number " + str(technique_number) + " not recognized. Check --help for more informations.")
         exit()
 
-
-
     solver.compute()
-    # print(solver.get_result())
-
     with open(result_file_path, "w") as fp:
         fp.write(solver.get_result())
 
@@ -36,7 +32,7 @@ def grab_input_parameters(args: list):
     if "--help" in args:
         print("""SAT solver written in Python. Commands available:
                     \t-S1 : DPLNN
-                    \t-S2 : ???
+                    \t-S2 : CDCL
                     \t-S3 : ???
                     Example command: main.py -S1 "input_file_path" """)
 
