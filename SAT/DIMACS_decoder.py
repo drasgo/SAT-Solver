@@ -121,7 +121,7 @@ class Formula:
 
 
 class Disjunction:
-    def __init__(self, elements: str):
+    def __init__(self, elements: str = ""):
         self.literals = []
         if elements != "":
             self.convert_to_logic(elements)

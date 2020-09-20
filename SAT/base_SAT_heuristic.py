@@ -24,6 +24,16 @@ class Base_SAT_Heuristic_Solver:
         print("Number of known literals: " + str(len([var for var in self.formula.disjunctions if len(var.literals) == 1])))
         print("**********")
 
+    def counter_proof(self):
+        print("Counter proof:")
+        for elem in self.formula.variables:
+            if elem not in self.result:
+                self.result[elem] = False
+        if self.formula.compute_formula(self.result) is True:
+            print("Good counter proof")
+        else:
+            print("fuck")
+
     @staticmethod
     def check_tautology(formula):
         """Check for tautologies in formula and removes clauses when tautologies appear"""
@@ -83,6 +93,7 @@ class Base_SAT_Heuristic_Solver:
     @staticmethod
     def shorten_formula(disjunctions, chosen_literal: dict):
         """shorten clauses in formula containing negative literal"""
+        conflict = ""
         for disjunction in disjunctions:
             removed_literals = []
             for literal in disjunction.literals:
@@ -95,7 +106,10 @@ class Base_SAT_Heuristic_Solver:
 
             for lit in removed_literals:
                 disjunction.literals.remove(lit)
-        return disjunctions
+
+                if len(disjunction.literals) == 0:
+                        conflict = lit.get_name()
+        return disjunctions, conflict
 
     @staticmethod
     def remove_clauses(disjunctions, chosen_literal: dict):
@@ -113,3 +127,22 @@ class Base_SAT_Heuristic_Solver:
         for disj in removed_clauses:
             disjunctions.remove(disj)
         return disjunctions
+
+    @staticmethod
+    def simplifications(new_formula, curr_result):
+        # If there are pure literals or unit clauses, executes simplifications and re-check for pure literals
+        # and/or unit clauses in cascade until there is nothing else to simplify in the current state
+        while True:
+            new_formula.disjunctions, conflict = Base_SAT_Heuristic_Solver.shorten_formula(new_formula.disjunctions, curr_result)
+            if conflict != "":
+                return new_formula, curr_result, conflict
+            new_formula.disjunctions = Base_SAT_Heuristic_Solver.remove_clauses(new_formula.disjunctions, curr_result)
+
+            simplified_literals = Base_SAT_Heuristic_Solver.check_pure_literals(new_formula.disjunctions, new_formula.get_variables())
+            if len(simplified_literals) == 0:
+                simplified_literals = Base_SAT_Heuristic_Solver.check_unit_clauses(new_formula.disjunctions)
+
+            if len(simplified_literals) == 0:
+                break
+            curr_result.update(simplified_literals)
+        return new_formula, curr_result, ""
