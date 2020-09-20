@@ -16,8 +16,8 @@ def execute_main(args: list):
         from SAT.CDCL import CDCL_Solver
         solver = CDCL_Solver(formula)
     elif technique_number == 3:
-        from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
-        solver = Base_SAT_Heuristic_Solver(formula)
+        from SAT.CDCL import CDCL_Solver
+        solver = CDCL_Solver(formula, vsids=True)
     else:
         print("Number " + str(technique_number) + " not recognized. Check --help for more informations.")
         exit()
@@ -31,9 +31,9 @@ def grab_input_parameters(args: list):
     tech = None
     if "--help" in args:
         print("""SAT solver written in Python. Commands available:
-                    \t-S1 : DPLNN
+                    \t-S1 : DPLL
                     \t-S2 : CDCL
-                    \t-S3 : ???
+                    \t-S3 : CDCL with VSIDS
                     Example command: main.py -S1 "input_file_path" """)
 
     elif len(args) >= 3:

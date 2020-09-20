@@ -49,7 +49,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
         if chosen_literal[0] not in curr_result:
             curr_result[chosen_literal[0]] = chosen_literal[1]
-            new_formula, curr_result, empty_clause = DPLL_Solver.simplifications(new_formula, curr_result)
+            new_formula, curr_result, empty_clause, _ = DPLL_Solver.simplifications(new_formula, curr_result)
 
         print("Number of clauses after " + str(len(new_formula.disjunctions)) + " clauses.  Num of known literals: " +
               str(len(curr_result)) + "\n")

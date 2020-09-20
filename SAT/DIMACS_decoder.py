@@ -157,10 +157,11 @@ class Disjunction:
 
 
 class Literal:
-    def __init__(self, literal):
-        lit = literal.split("-")
-        self.positive = True if len(lit) == 1 else False
-        self.name = lit[-1]
+    def __init__(self, literal: str = ""):
+        if literal != "":
+            lit = literal.split("-")
+            self.positive = True if len(lit) == 1 else False
+            self.name = lit[-1]
 
     def to_string(self) -> str:
         return ("" if self.positive is True else "-") + self.name
