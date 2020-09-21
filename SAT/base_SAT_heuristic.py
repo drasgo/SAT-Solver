@@ -153,26 +153,6 @@ class Base_SAT_Heuristic_Solver:
         return new_formula, curr_result, "", simpl
 
     @staticmethod
-    def perform_vsids(formula, n_backtracking: int) -> str:
-        threshold = 5
-        alpha = 0.5
-        occurrences = {}
-
-        for elem in [literal for disjunction in formula.disjunctions for literal in disjunction.literals]:
-            if elem.get_name() in occurrences:
-                occurrences[elem.get_name()] += 1
-            else:
-                occurrences[elem.get_name()] = 1
-
-        if n_backtracking % threshold == 0:
-            for elem in occurrences:
-                occurrences[elem.get_name()] = occurrences[elem.get_name()] * alpha
-
-        max_val = max(occurrences.values())
-        highest_literal = [literal for literal in occurrences if occurrences[literal] == max_val][0]
-        return highest_literal
-
-    @staticmethod
     def MAXO(formula):
         occurences = {}
         for disjunction in formula.disjunctions:
@@ -273,11 +253,33 @@ class Base_SAT_Heuristic_Solver:
         return occurences
 
     @staticmethod
+    def perform_VSIDS(formula, n_backtracking: int) -> str:
+        threshold = 5
+        alpha = 0.5
+        occurrences = {}
+
+        for elem in [literal for disjunction in formula.disjunctions for literal in disjunction.literals]:
+            if elem.get_name() in occurrences:
+                occurrences[elem.get_name()] += 1
+            else:
+                occurrences[elem.get_name()] = 1
+
+        if n_backtracking % threshold == 0:
+            for elem in occurrences:
+                occurrences[elem.get_name()] = occurrences[elem.get_name()] * alpha
+
+        max_val = max(occurrences.values())
+        maximum_literal = [literal for literal in occurrences if occurrences[literal] == max_val][0]
+        assert isinstance(maximum_literal, str)
+        return maximum_literal
+
+    @staticmethod
     def perform_MAXO(formula):
         """This rule selects the literal with the maximum number of occurrences in the formula"""
         score = Base_SAT_Heuristic_Solver.MAXO(formula)
         highest_occ = max(score.values())
         maximum_literal = [lit for lit in score if score[lit] == highest_occ][0]
+        assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
@@ -286,10 +288,11 @@ class Base_SAT_Heuristic_Solver:
         score = Base_SAT_Heuristic_Solver.MOM(formula)
         highest_occ = max(score.values())
         maximum_literal = [lit for lit in score if score[lit] == highest_occ][0]
+        assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
-    def performs_MAMS(formula):
+    def perform_MAMS(formula):
         """
         The idea is that it is desirable to satisfy as many
         clauses as possible (MAXO(l)), but also to create as many clauses of minimum size as possible (MOMS(¯l))
@@ -297,6 +300,7 @@ class Base_SAT_Heuristic_Solver:
         score = Base_SAT_Heuristic_Solver.MAMS(formula)
         highest_occ = max(score.values())
         maximum_literal = [lit for lit in score if score[lit] == highest_occ][0]
+        assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
@@ -308,6 +312,7 @@ class Base_SAT_Heuristic_Solver:
         score = Base_SAT_Heuristic_Solver.Jeroslaw_Wang(formula)
         highest_occ = max(score.values())
         maximum_literal = [lit for lit in score if score[lit] == highest_occ][0]
+        assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
@@ -324,6 +329,7 @@ class Base_SAT_Heuristic_Solver:
             occurences[literal.get_name()] = temp
         highest_occ = max(occurences.values())
         maximum_literal = [lit for lit in occurences if occurences[lit] == highest_occ][0]
+        assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
@@ -338,4 +344,26 @@ class Base_SAT_Heuristic_Solver:
             occurences = Base_SAT_Heuristic_Solver.MOM(formula)
         highest_occ = max(occurences.values())
         maximum_literal = [lit for lit in occurences if occurences[lit] == highest_occ][0]
+        assert isinstance(maximum_literal, str)
         return maximum_literal
+
+    def choose_branching(self, formula):
+        if self.branching == "VSIDS":
+            next_literal = self.perform_VSIDS(formula, self.number_backtracking)
+        elif self.branching == "MOM":
+            next_literal = self.perform_MOM(formula)
+        elif self.branching == "MAXO":
+            next_literal = self.perform_MAXO(formula)
+        elif self.branching == "MAMS":
+            next_literal = self.perform_MAMS(formula)
+        elif self.branching == "JW":
+            next_literal = self.perform_Jeroslaw_Wang(formula)
+        elif self.branching == "UP":
+            next_literal = self.perform_UP(formula)
+        elif self.branching == "SUP":
+            next_literal = self.perform_SUP(formula)
+        else:
+            new_variables = formula.get_variables()
+            next_literal = [var for var in new_variables][0]
+
+        return next_literal

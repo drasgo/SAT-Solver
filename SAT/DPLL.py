@@ -8,8 +8,8 @@ except ImportError:
 
 
 class DPLL_Solver(Base_SAT_Heuristic_Solver):
-    def __init__(self, formula):
-        super().__init__(formula)
+    def __init__(self, formula, branching: str = ""):
+        super().__init__(formula, branching)
 
     def compute(self) -> bool:
         """
@@ -18,10 +18,12 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         self.formula = self.check_tautology(self.formula)
         self.starting_time = time.perf_counter()
 
+        first_literal = self.choose_branching(self.formula)
+
         # flag = self.dpll_recursive(self.formula.to_string(), [self.formula.variables[0], False], {}, self.counter)
-        flag = self.dpll_recursive(pickle.dumps(self.formula), [self.formula.variables[0], False], {}, self.counter)
+        flag = self.dpll_recursive(pickle.dumps(self.formula), [first_literal, False], {}, self.counter)
         if flag is False:
-            flag = self.dpll_recursive(pickle.dumps(self.formula),[self.formula.variables[0], True], {}, self.counter)
+            flag = self.dpll_recursive(pickle.dumps(self.formula),[first_literal, True], {}, self.counter)
             # flag = self.dpll_recursive(self.formula.to_string(),[self.formula.variables[0], True], {}, self.counter)
 
         self.counter_proof()
@@ -66,8 +68,10 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
             self.number_backtracking += 1
             return False
 
-        new_variables = new_formula.get_variables()
-        next_literal = [var for var in new_variables][0]
+        next_literal = self.choose_branching(new_formula)
+
+        # new_variables = new_formula.get_variables()
+        # next_literal = [var for var in new_variables][0]
         # Compute the method recursively (first with the negated literal and then with the positive literal
         # if self.dpll_recursive(new_formula.to_string(), [next_literal, False], curr_result.copy(), recursion_index) is True:
         if self.dpll_recursive(pickle.dumps(new_formula), [next_literal, False], curr_result.copy(), recursion_index) is True:

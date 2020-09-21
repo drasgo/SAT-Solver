@@ -19,10 +19,12 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
         self.formula = self.check_tautology(self.formula)
         self.starting_time = time.perf_counter()
 
-        if self.branching == "vsids":
-            first_literal = CDCL_Solver.perform_vsids(self.formula, self.number_backtracking)
-        else:
-            first_literal = self.formula.variables[0]
+        first_literal = self.choose_branching(self.formula)
+
+        # if self.branching == "vsids":
+        #     first_literal = CDCL_Solver.perform_vsids(self.formula, self.number_backtracking)
+        # else:
+        #     first_literal = self.formula.variables[0]
 
         flag, _, _ = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, False], {}, self.counter,
                                    pickle.dumps(OrderedDict()))
@@ -73,12 +75,14 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
                 #     Check for the formulas in which that variable initially appeared
                 return self.prepare_backtracking(conflict, temporal_step)
 
-            new_variables = new_formula.get_variables()
+            # new_variables = new_formula.get_variables()
 
-            if self.vsids is True:
-                next_literal = self.perform_vsids(new_formula, self.number_backtracking)
-            else:
-                next_literal = [var for var in new_variables][0]
+            next_literal = self.choose_branching(new_formula)
+
+            # if self.vsids is True:
+            #     next_literal = self.perform_vsids(new_formula, self.number_backtracking)
+            # else:
+            #     next_literal = [var for var in new_variables][0]
 
             flag, back_state, new_clause = self.cdcl_recursive(pickle.dumps(new_formula), [next_literal, False],
                                                                curr_result.copy(), recursion_index,

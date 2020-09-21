@@ -16,8 +16,47 @@ def execute_main(args: list):
         from SAT.CDCL import CDCL_Solver
         solver = CDCL_Solver(formula)
     elif technique_number == 3:
+        from SAT.DPLL import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="VSIDS")
+    elif technique_number == 4:
+        from SAT.DPLL import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="MOM")
+    elif technique_number == 5:
+        from SAT.DPLL import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="MAXO")
+    elif technique_number == 6:
+        from SAT.DPLL import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="MAMS")
+    elif technique_number == 7:
+        from SAT.DPLL import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="JW")
+    elif technique_number == 8:
+        from SAT.DPLL import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="UP")
+    elif technique_number == 9:
+        from SAT.DPLL import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="SUP")
+    elif technique_number == 10:
         from SAT.CDCL import CDCL_Solver
-        solver = CDCL_Solver(formula, vsids=True)
+        solver = CDCL_Solver(formula, branching="VSIDS")
+    elif technique_number == 11:
+        from SAT.CDCL import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="MOM")
+    elif technique_number == 12:
+        from SAT.CDCL import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="MAXO")
+    elif technique_number == 13:
+        from SAT.CDCL import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="MAMS")
+    elif technique_number == 14:
+        from SAT.CDCL import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="JW")
+    elif technique_number == 15:
+        from SAT.CDCL import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="UP")
+    elif technique_number == 16:
+        from SAT.CDCL import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="SUP")
     else:
         print("Number " + str(technique_number) + " not recognized. Check --help for more informations.")
         exit()
@@ -30,11 +69,26 @@ def execute_main(args: list):
 def grab_input_parameters(args: list):
     tech = None
     if "--help" in args:
-        print("""SAT solver written in Python. Commands available:
-                    \t-S1 : DPLL
-                    \t-S2 : CDCL
-                    \t-S3 : CDCL with VSIDS
-                    Example command: main.py -S1 "input_file_path" """)
+        print("""
+SAT solver written in Python. Commands available:
+\t-S1 : DPLL
+\t-S2 : CDCL
+\t-S3 : DPLL + VSIDS
+\t-S4 : DPLL + MOM
+\t-S5 : DPLL + MAXO
+\t-S6 : DPLL + MAMS
+\t-S7 : DPLL + Jeroslaw-Wang
+\t-S8 : DPLL + UP
+\t-S9 : DPLL + SUP
+\t-S10 : CDCL + VSIDS
+\t-S11 : CDCL + MOM
+\t-S12 : CDCL + MAXO
+\t-S13 : CDCL + MAMS
+\t-S14 : CDCL + Jeroslaw-Wang
+\t-S15 : CDCL + UP
+\t-S16 : CDCL + SUP
+Example command: main.py -S1 "input_file_path"
+        """)
 
     elif len(args) >= 3:
         if "-S" in args[1].upper():
