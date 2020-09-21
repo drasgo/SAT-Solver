@@ -5,7 +5,12 @@ from SAT.DIMACS_decoder import Formula
 
 def execute_main(args: list):
     technique_number, input_file = grab_input_parameters(args)
-    result_file_path = "./" + input_file[input_file.rfind("/"):input_file.rfind(".")] + ".out"
+    if "/" in input_file:
+        result_file_path = "./" + input_file[input_file.rfind("/"):input_file.rfind(".")] + ".out"
+    else:
+        print("Insert full file path. Exiting")
+        exit()
+        
     check_file_exists(input_file)
     formula = Formula(read_DIMACS_input_file(input_file))
 
