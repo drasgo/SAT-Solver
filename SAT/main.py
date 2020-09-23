@@ -10,7 +10,7 @@ def execute_main(args: list):
     else:
         print("Insert full file path. Exiting")
         exit()
-        
+
     check_file_exists(input_file)
     formula = Formula(read_DIMACS_input_file(input_file))
 
@@ -62,6 +62,9 @@ def execute_main(args: list):
     elif technique_number == 16:
         from SAT.CDCL import CDCL_Solver
         solver = CDCL_Solver(formula, branching="SUP")
+    elif technique_number == 17:
+        from SAT.DPLL_parallel import DPLL_Solver
+        solver = DPLL_Solver(formula)
     else:
         print("Number " + str(technique_number) + " not recognized. Check --help for more informations.")
         exit()
@@ -92,6 +95,7 @@ SAT solver written in Python. Commands available:
 \t-S14 : CDCL + Jeroslaw-Wang
 \t-S15 : CDCL + UP
 \t-S16 : CDCL + SUP
+\t-S17 : DPLL parallel 
 Example command: main.py -S1 "input_file_path"
         """)
 

@@ -57,7 +57,7 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
 
             # check if end (positive or negative)
             if len(new_formula.disjunctions) == 0:
-                print(curr_result)
+                print("SOLUTION!")
                 self.result = curr_result
                 return True, None, None
 
@@ -87,7 +87,7 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
 
         for clause in [cl for cl in self.formula.disjunctions if conflict_variable in
                                                                  [literal.get_name() for literal in cl.literals]]:
-            print(clause.to_string())
+            # print(clause.to_string())
             for literal in clause.literals:
                 temp_literal = Literal()
                 temp_literal.name = literal.get_name()

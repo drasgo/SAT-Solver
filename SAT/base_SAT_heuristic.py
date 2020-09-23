@@ -8,6 +8,7 @@ class Base_SAT_Heuristic_Solver:
         self.branching = branching
         self.number_backtracking = 0
         self.starting_time = 0
+        self.max_num_threads = 1
         # self.n_of_backtracking = {}
         self.result = {}
 
@@ -23,6 +24,7 @@ class Base_SAT_Heuristic_Solver:
         print("Number of recursions: " + str(self.counter))
         print("Number of backtracking: " + str(self.number_backtracking))
         print("Time passed: " + str(round((time.perf_counter() - self.starting_time), 2)) + " seconds")
+        print("Threads used: " + str(self.max_num_threads))
         print("Number of known literals: " + str(len([var for var in self.formula.disjunctions if len(var.literals) == 1])))
         print("**********")
 
@@ -156,7 +158,7 @@ class Base_SAT_Heuristic_Solver:
     def MAXO(formula):
         occurences = {}
         for disjunction in formula.disjunctions:
-            for literal in disjunction:
+            for literal in disjunction.literals:
                 if literal.get_name() in occurences:
                     occurences[literal.get_name()] += 1
                 else:
@@ -170,7 +172,7 @@ class Base_SAT_Heuristic_Solver:
         occurences = {}
         minimum_clause = min([len(disj.literals) for disj in formula.disjunctions])
 
-        for disjunction in [disjunction for disjunction in formula.disjunctions if len(disjunction) == minimum_clause]:
+        for disjunction in [disjunction for disjunction in formula.disjunctions if len(disjunction.literals) == minimum_clause]:
             # Retrieve the smallest clauses
             for literal in disjunction.literals:
                 # Put the literals occurence in the dictionary (dividing positive and negative)
@@ -191,7 +193,7 @@ class Base_SAT_Heuristic_Solver:
             result[occur] = (occurences[occur]["positive"] + occurences[occur]["negative"]) * 2 ** k + \
                             occurences[occur]["positive"] * occurences[occur]["negative"]
 
-        return occurences
+        return result
 
     @staticmethod
     def MAMS(formula):
@@ -219,15 +221,15 @@ class Base_SAT_Heuristic_Solver:
         return occurrences
 
     @staticmethod
-    def UP(formula, literal):
+    def UP(formula, literal: str):
         alpha = 2
         beta = 1
 
         temp1, conflict = Base_SAT_Heuristic_Solver.shorten_formula(formula.disjunctions[:],
-                                                                    {literal.get_name(): False})
+                                                                    {literal: False})
         if conflict != "":
             return None
-        temp2 = Base_SAT_Heuristic_Solver.remove_clauses(formula.disjunctions[:], {literal.get_name(): False})
+        temp2 = Base_SAT_Heuristic_Solver.remove_clauses(formula.disjunctions[:], {literal: False})
 
         return alpha * (len(formula.disjunctions) - len(temp2)) + \
                beta * (len([literal
@@ -242,14 +244,14 @@ class Base_SAT_Heuristic_Solver:
         first_candidate = Base_SAT_Heuristic_Solver.perform_MOM(formula)
         second_candidate = Base_SAT_Heuristic_Solver.perform_MAXO(formula)
         third_candidate = Base_SAT_Heuristic_Solver.perform_Jeroslaw_Wang(formula)
-        fourth_candidate = Base_SAT_Heuristic_Solver.performs_MAMS(formula)
+        fourth_candidate = Base_SAT_Heuristic_Solver.perform_MAMS(formula)
 
         occurences = {}
         for literal in [first_candidate, second_candidate, third_candidate, fourth_candidate]:
-            temp = Base_SAT_Heuristic_Solver.UP(formula, literal.get_name())
+            temp = Base_SAT_Heuristic_Solver.UP(formula, literal)
             if temp is None:
                 continue
-            occurences[literal.get_name()] = temp
+            occurences[literal] = temp
         return occurences
 
     @staticmethod
@@ -266,7 +268,7 @@ class Base_SAT_Heuristic_Solver:
 
         if n_backtracking % threshold == 0:
             for elem in occurrences:
-                occurrences[elem.get_name()] = occurrences[elem.get_name()] * alpha
+                occurrences[elem] = occurrences[elem] * alpha
 
         max_val = max(occurrences.values())
         maximum_literal = [literal for literal in occurrences if occurrences[literal] == max_val][0]
