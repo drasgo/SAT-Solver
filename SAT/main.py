@@ -68,6 +68,48 @@ def execute_main(args: list):
     elif technique_number == 18:
         from SAT.CDCL_parallel import CDCL_Solver
         solver = CDCL_Solver(formula)
+    elif technique_number == 19:
+        from SAT.DPLL_parallel import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="VSIDS")
+    elif technique_number == 20:
+        from SAT.DPLL_parallel import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="MOM")
+    elif technique_number == 21:
+        from SAT.DPLL_parallel import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="MAXO")
+    elif technique_number == 22:
+        from SAT.DPLL_parallel import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="MAMS")
+    elif technique_number == 23:
+        from SAT.DPLL_parallel import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="JW")
+    elif technique_number == 24:
+        from SAT.DPLL_parallel import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="UP")
+    elif technique_number == 25:
+        from SAT.DPLL_parallel import DPLL_Solver
+        solver = DPLL_Solver(formula, branching="SUP")
+    elif technique_number == 26:
+        from SAT.CDCL_parallel import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="VSIDS")
+    elif technique_number == 27:
+        from SAT.CDCL_parallel import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="MOM")
+    elif technique_number == 28:
+        from SAT.CDCL_parallel import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="MAXO")
+    elif technique_number == 29:
+        from SAT.CDCL_parallel import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="MAMS")
+    elif technique_number == 30:
+        from SAT.CDCL_parallel import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="JW")
+    elif technique_number == 31:
+        from SAT.CDCL_parallel import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="UP")
+    elif technique_number == 32:
+        from SAT.CDCL_parallel import CDCL_Solver
+        solver = CDCL_Solver(formula, branching="SUP")
     else:
         print("Number " + str(technique_number) + " not recognized. Check --help for more informations.")
         exit()
@@ -98,8 +140,22 @@ SAT solver written in Python. Commands available:
 \t-S14 : CDCL + Jeroslaw-Wang
 \t-S15 : CDCL + UP
 \t-S16 : CDCL + SUP
-\t-S17 : DPLL parallel 
-\t-S18 : CDCL parallel 
+\t-S17 : Parallel DPLL 
+\t-S18 : Parallel CDCL
+\t-S19 : Parallel DPLL + VSIDS
+\t-S20 : Parallel DPLL + MOM
+\t-S21 : Parallel DPLL + MAXO
+\t-S22 : Parallel DPLL + MAMS
+\t-S23 : Parallel DPLL + Jeroslaw-Wang
+\t-S24 : Parallel DPLL + UP
+\t-S25 : Parallel DPLL + SUP
+\t-S26 : Parallel CDCL + VSIDS
+\t-S27 : Parallel CDCL + MOM
+\t-S28 : Parallel CDCL + MAXO
+\t-S29 : Parallel CDCL + MAMS
+\t-S30 : Parallel CDCL + Jeroslaw-Wang
+\t-S31 : Parallel CDCL + UP
+\t-S32 : Parallel CDCL + SUP
 Example command: main.py -S1 "input_file_path"
         """)
 
