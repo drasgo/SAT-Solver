@@ -65,6 +65,9 @@ def execute_main(args: list):
     elif technique_number == 17:
         from SAT.DPLL_parallel import DPLL_Solver
         solver = DPLL_Solver(formula)
+    elif technique_number == 18:
+        from SAT.CDCL_parallel import CDCL_Solver
+        solver = CDCL_Solver(formula)
     else:
         print("Number " + str(technique_number) + " not recognized. Check --help for more informations.")
         exit()
@@ -96,6 +99,7 @@ SAT solver written in Python. Commands available:
 \t-S15 : CDCL + UP
 \t-S16 : CDCL + SUP
 \t-S17 : DPLL parallel 
+\t-S18 : CDCL parallel 
 Example command: main.py -S1 "input_file_path"
         """)
 
