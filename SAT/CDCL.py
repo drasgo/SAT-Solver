@@ -1,5 +1,5 @@
 from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
-from SAT.DIMACS_decoder import Formula, Disjunction, Literal
+from SAT.DIMACS_decoder import Formula
 from collections import OrderedDict
 import time
 try:
@@ -80,54 +80,3 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
             else:
                 print("Back to " + str(recursion_index) + " recursion state")
                 new_formula.disjunctions.append(new_clause)
-
-    def prepare_backtracking(self, conflict_variable: str, temporal_step: OrderedDict):
-        disjunction = Disjunction()
-        self.number_backtracking += 1
-        back_state = ""
-
-        for clause in [cl for cl in self.formula.disjunctions if conflict_variable in
-                                                                 [literal.get_name() for literal in cl.literals]]:
-            for literal in clause.literals:
-                temp_literal = Literal()
-                temp_literal.name = literal.get_name()
-                temp_literal.positive = literal.positive
-                disjunction.literals.append(temp_literal)
-
-        steps = []
-        for elem in temporal_step:
-            steps.append(elem)
-            for sub_elem in temporal_step[elem]:
-                steps.append(sub_elem)
-
-        for step in steps:
-            if any(step == literal.get_name() for literal in disjunction.literals):
-                if step in temporal_step:
-                    back_state = step
-                else:
-                    for elem in temporal_step:
-                        if any(step == sub for sub in temporal_step[elem]):
-                            back_state = elem
-                            break
-                break
-
-        flag = False
-        while flag is False:
-            flag = True
-            for literal in disjunction.literals:
-                if any(literal != lit and literal.get_name() == lit.get_name() and
-                       literal.positive is not lit.positive for lit in disjunction.literals):
-
-                    disjunction.literals.remove(literal)
-                    disjunction.literals.remove([lit for lit in disjunction.literals if literal != lit and
-                                                 literal.get_name() == lit.get_name() and
-                                                 literal.positive is not lit.positive][0])
-                    flag = False
-                    break
-                if any(literal != lit and literal.get_name() == lit.get_name() and
-                       literal.positive is lit.positive for lit in disjunction.literals):
-                    disjunction.literals.remove(literal)
-                    flag = False
-                    break
-
-        return False, back_state, disjunction

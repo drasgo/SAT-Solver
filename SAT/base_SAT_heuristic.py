@@ -1,4 +1,7 @@
 import time
+import random
+from collections import OrderedDict
+from SAT.DIMACS_decoder import Disjunction, Literal
 
 
 class Base_SAT_Heuristic_Solver:
@@ -255,7 +258,7 @@ class Base_SAT_Heuristic_Solver:
         return occurences
 
     @staticmethod
-    def perform_VSIDS(formula, n_backtracking: int) -> str:
+    def perform_VSIDS(formula, n_backtracking: int, count: int = 1) -> str:
         threshold = 5
         alpha = 0.5
         occurrences = {}
@@ -270,55 +273,50 @@ class Base_SAT_Heuristic_Solver:
             for elem in occurrences:
                 occurrences[elem] = occurrences[elem] * alpha
 
-        max_val = max(occurrences.values())
-        maximum_literal = [literal for literal in occurrences if occurrences[literal] == max_val][0]
+        maximum_literal = Base_SAT_Heuristic_Solver.choose_literal(occurrences, count)
         assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
-    def perform_MAXO(formula):
+    def perform_MAXO(formula, count: int = 1):
         """This rule selects the literal with the maximum number of occurrences in the formula"""
-        score = Base_SAT_Heuristic_Solver.MAXO(formula)
-        highest_occ = max(score.values())
-        maximum_literal = [lit for lit in score if score[lit] == highest_occ][0]
+        occurences = Base_SAT_Heuristic_Solver.MAXO(formula)
+        maximum_literal = Base_SAT_Heuristic_Solver.choose_literal(occurences, count)
         assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
-    def perform_MOM(formula) -> str:
+    def perform_MOM(formula, count: int = 1) -> str:
         """it counts only occurrences of literals in minimum size clauses"""
-        score = Base_SAT_Heuristic_Solver.MOM(formula)
-        highest_occ = max(score.values())
-        maximum_literal = [lit for lit in score if score[lit] == highest_occ][0]
+        occurences = Base_SAT_Heuristic_Solver.MOM(formula)
+        maximum_literal = Base_SAT_Heuristic_Solver.choose_literal(occurences, count)
         assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
-    def perform_MAMS(formula):
+    def perform_MAMS(formula, count: int = 1):
         """
         The idea is that it is desirable to satisfy as many
         clauses as possible (MAXO(l)), but also to create as many clauses of minimum size as possible (MOMS(¯l))
         """
-        score = Base_SAT_Heuristic_Solver.MAMS(formula)
-        highest_occ = max(score.values())
-        maximum_literal = [lit for lit in score if score[lit] == highest_occ][0]
+        occurences = Base_SAT_Heuristic_Solver.MAMS(formula)
+        maximum_literal = Base_SAT_Heuristic_Solver.choose_literal(occurences, count)
         assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
-    def perform_Jeroslaw_Wang(formula):
+    def perform_Jeroslaw_Wang(formula, count: int = 1):
         """
         The Jeroslaw-Wang rule combines the ideas behind
         MAXO and MOMS using exponential weighting
         """
-        score = Base_SAT_Heuristic_Solver.Jeroslaw_Wang(formula)
-        highest_occ = max(score.values())
-        maximum_literal = [lit for lit in score if score[lit] == highest_occ][0]
+        occurences = Base_SAT_Heuristic_Solver.Jeroslaw_Wang(formula)
+        maximum_literal = Base_SAT_Heuristic_Solver.choose_literal(occurences, count)
         assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
-    def perform_UP(formula):
+    def perform_UP(formula, count: int = 1):
         """
         This rule probes the search by making a trial assignment to each free literal and counting the number of
         triggered unit propagations due to that assignment
@@ -329,13 +327,12 @@ class Base_SAT_Heuristic_Solver:
             if temp is None:
                 continue
             occurences[literal.get_name()] = temp
-        highest_occ = max(occurences.values())
-        maximum_literal = [lit for lit in occurences if occurences[lit] == highest_occ][0]
+        maximum_literal = Base_SAT_Heuristic_Solver.choose_literal(occurences, count)
         assert isinstance(maximum_literal, str)
         return maximum_literal
 
     @staticmethod
-    def perform_SUP(formula):
+    def perform_SUP(formula, count: int = 1):
         """
         SUP runs first the four inexpensive rules (MAXO, MOMS,
         MAMS, and JW), which suggest up to four distinct literals and then it
@@ -344,28 +341,88 @@ class Base_SAT_Heuristic_Solver:
         occurences = Base_SAT_Heuristic_Solver.SUP(formula)
         if len(occurences) == 0:
             occurences = Base_SAT_Heuristic_Solver.MOM(formula)
-        highest_occ = max(occurences.values())
-        maximum_literal = [lit for lit in occurences if occurences[lit] == highest_occ][0]
+        maximum_literal = Base_SAT_Heuristic_Solver.choose_literal(occurences, count)
         assert isinstance(maximum_literal, str)
         return maximum_literal
 
-    def choose_branching(self, formula):
+    @staticmethod
+    def choose_literal(occurences: dict, count: int) -> str:
+        while count >= 0:
+            highest_occ = max(occurences.values())
+            maximum_literal = [lit for lit in occurences if occurences[lit] == highest_occ][0]
+            count -= 1
+        return maximum_literal
+
+    def choose_branching(self, formula, count: int = 0):
         if self.branching == "VSIDS":
-            next_literal = self.perform_VSIDS(formula, self.number_backtracking)
+            next_literal = self.perform_VSIDS(formula, self.number_backtracking, count)
         elif self.branching == "MOM":
-            next_literal = self.perform_MOM(formula)
+            next_literal = self.perform_MOM(formula, count)
         elif self.branching == "MAXO":
-            next_literal = self.perform_MAXO(formula)
+            next_literal = self.perform_MAXO(formula, count)
         elif self.branching == "MAMS":
-            next_literal = self.perform_MAMS(formula)
+            next_literal = self.perform_MAMS(formula, count)
         elif self.branching == "JW":
-            next_literal = self.perform_Jeroslaw_Wang(formula)
+            next_literal = self.perform_Jeroslaw_Wang(formula, count)
         elif self.branching == "UP":
-            next_literal = self.perform_UP(formula)
+            next_literal = self.perform_UP(formula, count)
         elif self.branching == "SUP":
-            next_literal = self.perform_SUP(formula)
+            next_literal = self.perform_SUP(formula, count)
         else:
             new_variables = formula.get_variables()
-            next_literal = [var for var in new_variables][0]
+            next_literal = random.choice([var for var in new_variables])
 
         return next_literal
+
+    def prepare_backtracking(self, conflict_variable: str, temporal_step: OrderedDict):
+        disjunction = Disjunction()
+        self.number_backtracking += 1
+        back_state = ""
+
+        for clause in [cl for cl in self.formula.disjunctions if conflict_variable in
+                                                                 [literal.get_name() for literal in cl.literals]]:
+            # print(clause.to_string())
+            for literal in clause.literals:
+                temp_literal = Literal()
+                temp_literal.name = literal.get_name()
+                temp_literal.positive = literal.positive
+                disjunction.literals.append(temp_literal)
+
+        steps = []
+        for elem in temporal_step:
+            steps.append(elem)
+            for sub_elem in temporal_step[elem]:
+                steps.append(sub_elem)
+
+        for step in steps:
+            if any(step == literal.get_name() for literal in disjunction.literals):
+                if step in temporal_step:
+                    back_state = step
+                else:
+                    for elem in temporal_step:
+                        if any(step == sub for sub in temporal_step[elem]):
+                            back_state = elem
+                            break
+                break
+
+        flag = False
+        while flag is False:
+            flag = True
+            for literal in disjunction.literals:
+                if any(literal != lit and literal.get_name() == lit.get_name() and
+                       literal.positive is not lit.positive for lit in disjunction.literals):
+
+                    disjunction.literals.remove(literal)
+                    disjunction.literals.remove([lit for lit in disjunction.literals if literal != lit and
+                                                 literal.get_name() == lit.get_name() and
+                                                 literal.positive is not lit.positive][0])
+                    flag = False
+                    break
+                if any(literal != lit and literal.get_name() == lit.get_name() and
+                       literal.positive is lit.positive for lit in disjunction.literals):
+                    # print("removed literal with same value " + literal.to_string())
+                    disjunction.literals.remove(literal)
+                    flag = False
+                    break
+
+        return False, back_state, disjunction

@@ -1,9 +1,12 @@
 from SAT.base_SAT_heuristic import Base_SAT_Heuristic_Solver
 from SAT.DIMACS_decoder import Formula, Disjunction, Literal
+from SAT.CDCL import CDCL_Solver
 from collections import OrderedDict
 import multiprocessing
 import psutil
 import time
+import ctypes
+import os
 try:
     import cPickle as pickle
 except ImportError:
@@ -13,10 +16,10 @@ except ImportError:
 MAX_THREADS = 4
 result = multiprocessing.Manager().dict()
 num_recursion = multiprocessing.Value("i", 0)
-flag = multiprocessing.Value("b", False)
+flag = multiprocessing.Value("i", 0)
 num_backtracking = multiprocessing.Value("i",0)
-num_threads = multiprocessing.Value("i", 2)
-shared_formula = multiprocessing.Value("s", "")
+num_threads = multiprocessing.Value("i", 0)
+shared_formula = multiprocessing.Manager().dict({0:""})
 class CDCL_Solver(Base_SAT_Heuristic_Solver):
     def __init__(self, formula, branching: str = ""):
         self.lock = multiprocessing.Lock()
@@ -26,46 +29,66 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
         """
         Computes CDCL algorithm
         """
+        global num_threads
         self.formula = self.check_tautology(self.formula)
         self.starting_time = time.perf_counter()
-        first_literal = self.choose_branching(self.formula)
+        threads = []
 
-        thread1 = multiprocessing.Process(target=self.cdcl_recursive, args=(pickle.dumps(self.formula), [first_literal, False], {}, self.counter,
-                                   pickle.dumps(OrderedDict())))
-        thread2 = multiprocessing.Process(target=self.cdcl_recursive, args=(pickle.dumps(self.formula), [first_literal, True], {}, self.counter,
-                                   pickle.dumps(OrderedDict())))
+        for index in range(0, MAX_THREADS, 2):
+            first_literal = self.choose_branching(self.formula, int(index/2))
+            if index == MAX_THREADS - 1:
+                threads.append(multiprocessing.Process(target=self.cdcl_recursive,
+                                                       args=(pickle.dumps(self.formula),
+                                                             [first_literal, False],
+                                                             {},
+                                                             self.counter,
+                                                             pickle.dumps(OrderedDict()),
+                                                             "")))
+                num_threads.value += 1
+            else:
+                threads.append(multiprocessing.Process(target=self.cdcl_recursive,
+                                                       args=(pickle.dumps(self.formula),
+                                                             [first_literal, False],
+                                                             {},
+                                                             self.counter,
+                                                             pickle.dumps(OrderedDict()),
+                                                             "")))
+                threads.append(multiprocessing.Process(target=self.cdcl_recursive,
+                                                       args=(pickle.dumps(self.formula),
+                                                             [first_literal, True],
+                                                             {},
+                                                             self.counter,
+                                                             pickle.dumps(OrderedDict()),
+                                                             "")))
+                num_threads.value += 2
 
-        thread1.start()
-        thread2.start()
-        while (thread1.is_alive() or thread2.is_alive()) and flag.value is False:
+        for thread in threads:
+            thread.start()
+
+        while any(thread.is_alive() for thread in threads) and flag.value is False:
             pass
         if flag.value is True:
-            if thread1.is_alive():
-                parent = psutil.Process(thread1.pid)
+            for th in [thread for thread in threads if thread.is_alive()]:
+                parent = psutil.Process(th.pid)
                 for child in parent.children(recursive=True):
-                    child.kill()
-                parent.kill()
-            elif thread2.is_alive():
-                parent = psutil.Process(thread2.pid)
-                for child in parent.children(recursive=True):
-                    child.kill()
-                parent.kill()
+                    child.terminate()
+                parent.terminate()
+
         else:
-            if thread1.is_alive():
-                thread1.join()
-            else:
-                thread2.join()
+            for th in [thread for thread in threads if thread.is_alive()]:
+                th.join()
 
         self.number_backtracking = num_backtracking.value
         self.max_num_threads = num_threads.value
         self.counter = num_recursion.value
         self.result = result
+        final_flag = True if flag.value == 1 else False
         self.counter_proof()
         print("Finished lookup.\n")
-        self.summary_information(flag.value)
-        return flag.value
+        self.summary_information(final_flag)
+        return final_flag
 
-    def cdcl_recursive(self, formula, chosen_literal: list, curr_result: dict, recursion_index, temporal_step, added_clause: str = ""):
+    def cdcl_recursive(self, formula, chosen_literal: list, curr_result: dict, recursion_index, temporal_step, added_clause):
         # Used for keeping track of the current recursion index
         global shared_formula
         global num_backtracking
@@ -80,7 +103,6 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
         temporal_step = pickle.loads(temporal_step)
         assert isinstance(new_formula, Formula)
         assert isinstance(temporal_step, OrderedDict)
-        # Used for debugging for looking at the number of clauses before modification
         old_disjunction_length = str(len(new_formula.disjunctions))
 
         if chosen_literal[0] not in curr_result:
@@ -88,29 +110,38 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
             temporal_step[chosen_literal[0]] = []
 
         while True:
-            if flag.value is True:
+            if flag.value == 1:
+                psutil.Process(os.getpid()).terminate()
                 return True, None, None
 
-            if  added_clause != shared_formula.value:
-                new_formula.disjunctions.append(Disjunction(elements=shared_formula.value))
+            if  added_clause != shared_formula[0]:
+                print("Added new clause")
+                added_clause = shared_formula[0]
+                temp_formula = Formula(str_logic=shared_formula[0])
+                diff = [disj for disj in temp_formula.disjunctions if
+                        all(disj.to_string() != orig_disj.to_string
+                            for orig_disj in new_formula.disjunctions)]
+                new_formula.disjunctions += diff
 
             # simplifications
             new_formula, curr_result, conflict, added_literals = CDCL_Solver.simplifications(new_formula, curr_result)
             temporal_step[chosen_literal[0]] += added_literals
-
+            if flag.value == 1:
+                psutil.Process(os.getpid()).terminate()
+                return True, None, None
             self.lock.acquire()
             print("* Recursion n°: " + str(recursion_index) + ". Number of clauses bef.: " + old_disjunction_length +
                   ". Curr literal " + chosen_literal[0] + ". Number of clauses after " +
                   str(len(new_formula.disjunctions)) + " clauses.  Num of known literals: " +
-                  str(len(curr_result)) + "\n")
+                  str(len(curr_result)) + ". Num of threads: " + str(num_threads.value) + "\n")
             self.lock.release()
 
             # check if end (positive or negative)
             if len(new_formula.disjunctions) == 0:
-                self.lock.acquire()
+                # self.lock.acquire()
                 print("FOUND SOLUTION!")
                 result.update(curr_result.copy())
-                flag.value = True
+                flag.value = 1
                 return True, None, None
 
             if conflict != "":
@@ -118,70 +149,20 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
                 return self.prepare_backtracking(conflict, temporal_step)
 
             next_literal = self.choose_branching(new_formula)
-            flag, back_state, new_clause = self.cdcl_recursive(pickle.dumps(new_formula), [next_literal, False],
+            temp_flag, back_state, new_clause = self.cdcl_recursive(pickle.dumps(new_formula), [next_literal, False],
                                                                curr_result.copy(), recursion_index,
                                                                pickle.dumps(temporal_step),
-                                                               shared_formula.value)
+                                                               added_clause)
 
-            if flag is True:
+            if flag.value == 1:
+                psutil.Process(os.getpid()).terminate()
                 return True, None, None
 
             elif back_state != chosen_literal[0]:
-                return flag, back_state, new_clause
+                return temp_flag, back_state, new_clause
 
             else:
                 print("Back to " + str(recursion_index) + " recursion state")
                 new_formula.disjunctions.append(new_clause)
-
-    def prepare_backtracking(self, conflict_variable: str, temporal_step: OrderedDict):
-        disjunction = Disjunction()
-        self.number_backtracking += 1
-        back_state = ""
-
-        for clause in [cl for cl in self.formula.disjunctions if conflict_variable in
-                                                                 [literal.get_name() for literal in cl.literals]]:
-            # print(clause.to_string())
-            for literal in clause.literals:
-                temp_literal = Literal()
-                temp_literal.name = literal.get_name()
-                temp_literal.positive = literal.positive
-                disjunction.literals.append(temp_literal)
-
-        steps = []
-        for elem in temporal_step:
-            steps.append(elem)
-            for sub_elem in temporal_step[elem]:
-                steps.append(sub_elem)
-
-        for step in steps:
-            if any(step == literal.get_name() for literal in disjunction.literals):
-                if step in temporal_step:
-                    back_state = step
-                else:
-                    for elem in temporal_step:
-                        if any(step == sub for sub in temporal_step[elem]):
-                            back_state = elem
-                            break
-                break
-
-        flag = False
-        while flag is False:
-            flag = True
-            for literal in disjunction.literals:
-                if any(literal != lit and literal.get_name() == lit.get_name() and
-                       literal.positive is not lit.positive for lit in disjunction.literals):
-
-                    disjunction.literals.remove(literal)
-                    disjunction.literals.remove([lit for lit in disjunction.literals if literal != lit and
-                                                 literal.get_name() == lit.get_name() and
-                                                 literal.positive is not lit.positive][0])
-                    flag = False
-                    break
-                if any(literal != lit and literal.get_name() == lit.get_name() and
-                       literal.positive is lit.positive for lit in disjunction.literals):
-                    # print("removed literal with same value " + literal.to_string())
-                    disjunction.literals.remove(literal)
-                    flag = False
-                    break
-
-        return False, back_state, disjunction
+                temp_f =Formula(disjunctions=[new_clause])
+                shared_formula[0] = temp_f.to_string()

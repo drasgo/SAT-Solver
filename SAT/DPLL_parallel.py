@@ -11,7 +11,7 @@ except ImportError:
 
 MAX_THREADS = 4
 result = multiprocessing.Manager().dict()
-flag = multiprocessing.Value("b", False)
+flag = multiprocessing.Value("i", 0)
 num_recursion = multiprocessing.Value("i", 0)
 num_backtracking = multiprocessing.Value("i",0)
 num_threads = multiprocessing.Value("i", 2)
@@ -60,10 +60,11 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         self.number_backtracking = num_backtracking.value
         self.max_num_threads = num_threads.value
         self.counter = num_recursion.value
+        final_flag = True if flag.value == 1 else False
         self.counter_proof()
         print("Finished lookup.\n")
-        self.summary_information(flag.value)
-        return flag.value
+        self.summary_information(final_flag)
+        return final_flag
 
     def dpll_recursive(self, formula, chosen_literal: list, curr_result: dict, recursion_index):
         # chosen_literal = [literal_name, literal_value]
@@ -80,7 +81,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         assert isinstance(new_formula, Formula)
         old_disjunctions = str(len(new_formula.disjunctions))
 
-        if flag.value is True:
+        if flag.value == 1:
             return
 
         # If the literal chosen in the previous recursive state is not in the curr_result after the simplification
@@ -89,7 +90,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
             curr_result[chosen_literal[0]] = chosen_literal[1]
             new_formula, curr_result, empty_clause, _ = DPLL_Solver.simplifications(new_formula, curr_result)
 
-        if flag.value:
+        if flag.value == 1:
             return
 
         self.lock.acquire()
@@ -101,9 +102,9 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
         if len(new_formula.disjunctions) == 0:
             # Check if formula is empty
-            self.lock.acquire()
+            # self.lock.acquire()
             result.update(curr_result.copy())
-            flag.value = True
+            flag.value = 1
             print("FOUND SOLUTION!")
             return True
 
@@ -134,12 +135,12 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
             return True
         elif thread is True:
             try:
-                while thread1.is_alive() and flag.value is False:
+                while thread1.is_alive() and flag.value == 1:
                     pass
                 if thread1.is_alive():
                     thread1.terminate()
                 thread1.join()
-                num_threads -= 1
+                num_threads.value -= 1
                 self.threads_available += 1
             except UnboundLocalError:
                 pass
