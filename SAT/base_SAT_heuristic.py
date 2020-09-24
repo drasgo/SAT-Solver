@@ -1,7 +1,11 @@
 import time
 import random
 from collections import OrderedDict
-from SAT.DIMACS_decoder import Disjunction, Literal
+from SAT.DIMACS_decoder import Formula, Disjunction, Literal
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 
 class Base_SAT_Heuristic_Solver:
@@ -224,23 +228,16 @@ class Base_SAT_Heuristic_Solver:
         return occurrences
 
     @staticmethod
-    def UP(formula, literal: str):
-        alpha = 2
-        beta = 1
-
-        temp1, conflict = Base_SAT_Heuristic_Solver.shorten_formula(formula.disjunctions[:],
+    def UP(f, literal: str):
+        formula = pickle.loads(f)
+        temp1, conflict = Base_SAT_Heuristic_Solver.shorten_formula(formula.disjunctions,
                                                                     {literal: False})
         if conflict != "":
             return None
-        temp2 = Base_SAT_Heuristic_Solver.remove_clauses(formula.disjunctions[:], {literal: False})
-
-        return alpha * (len(formula.disjunctions) - len(temp2)) + \
-               beta * (len([literal
-                            for disjunction in formula.disjunctions
-                            for literal in disjunction]) -
-                       len([literal
-                            for disjunction in temp1.disjunctions
-                            for literal in disjunction]))
+        temp2 = Base_SAT_Heuristic_Solver.remove_clauses(formula.disjunctions, {literal: False})
+        t1 = len(temp1)
+        t2 = len(temp2)
+        return t1 + t2
 
     @staticmethod
     def SUP(formula):
@@ -250,8 +247,9 @@ class Base_SAT_Heuristic_Solver:
         fourth_candidate = Base_SAT_Heuristic_Solver.perform_MAMS(formula)
 
         occurences = {}
+        f = pickle.dumps(formula)
         for literal in [first_candidate, second_candidate, third_candidate, fourth_candidate]:
-            temp = Base_SAT_Heuristic_Solver.UP(formula, literal)
+            temp = Base_SAT_Heuristic_Solver.UP(pickle.dumps(formula), literal)
             if temp is None:
                 continue
             occurences[literal] = temp
@@ -323,10 +321,14 @@ class Base_SAT_Heuristic_Solver:
         """
         occurences = {}
         for literal in formula.get_variables():
-            temp = Base_SAT_Heuristic_Solver.UP(formula, literal.get_name())
+            temp = Base_SAT_Heuristic_Solver.UP(pickle.dumps(formula), literal)
             if temp is None:
                 continue
-            occurences[literal.get_name()] = temp
+            occurences[literal] = temp
+        if len(occurences) == 0:
+            occurences = Base_SAT_Heuristic_Solver.MOM(formula)
+
+        # print(occurences)
         maximum_literal = Base_SAT_Heuristic_Solver.choose_literal(occurences, count)
         assert isinstance(maximum_literal, str)
         return maximum_literal
@@ -350,6 +352,7 @@ class Base_SAT_Heuristic_Solver:
         while count >= 0:
             highest_occ = max(occurences.values())
             maximum_literal = [lit for lit in occurences if occurences[lit] == highest_occ][0]
+            occurences.pop(maximum_literal)
             count -= 1
         return maximum_literal
 
