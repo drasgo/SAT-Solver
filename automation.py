@@ -54,7 +54,8 @@ if __name__ == "__main__":
                 except subprocess.TimeoutExpired:
                     print("TIMEOUT\n")
                     time = "timeout"
-
+                if flag is False:
+                    continue
                 data[file].append({
                     'technique': f'S{num}',
                     'implementation': 'linear',

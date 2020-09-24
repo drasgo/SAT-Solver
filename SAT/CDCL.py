@@ -22,8 +22,10 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
 
         flag, _, _ = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, False], {}, self.counter,
                                    pickle.dumps(OrderedDict()))
+        # print(flag)
         if flag is False:
-            flag = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, True], {}, self.counter,
+            # print("second**********+")
+            flag, _, _ = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, True], {}, self.counter,
                                        pickle.dumps(OrderedDict()))
 
         flag = self.counter_proof()
@@ -80,3 +82,4 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
             else:
                 print("Back to " + str(recursion_index) + " recursion state")
                 new_formula.disjunctions.append(new_clause)
+                self.formula.disjunctions.append(new_clause)
