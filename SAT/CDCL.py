@@ -20,12 +20,11 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
         self.starting_time = time.perf_counter()
         first_literal = self.choose_branching(self.formula)
 
-        flag, _, _ = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, False], {}, self.counter,
+        flag, _, _ = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, False], {}, 0,
                                    pickle.dumps(OrderedDict()))
         # print(flag)
         if flag is False:
-            # print("second**********+")
-            flag, _, _ = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, True], {}, self.counter,
+            flag, _, _ = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, True], {}, 0,
                                        pickle.dumps(OrderedDict()))
 
         flag = self.counter_proof()
@@ -38,7 +37,7 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
         # Used for keeping track of the current recursion index
         recursion_index += 1
         # Counter for total number of recursions
-        self.counter = recursion_index
+        self.counter = 1
         new_formula = pickle.loads(formula)
         temporal_step = pickle.loads(temporal_step)
         assert isinstance(new_formula, Formula)

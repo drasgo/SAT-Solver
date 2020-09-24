@@ -8,7 +8,11 @@ from os.path import isfile, join
 data = {}
 TIMEOUT = 300
 if __name__ == "__main__":
-    paths = ["temp", "tests", "tests/different_literals"]
+    paths = ["temp"]
+    counter = 0
+    with open("experiments.json", "r") as fp:
+        data = json.load(fp)
+    # paths = ["temp", "tests", "tests/different_literals"]
     for temp_path in paths:
         path = os.path.abspath(temp_path)
         files = [f for f in listdir(path) if isfile(join(path, f))]
@@ -16,9 +20,11 @@ if __name__ == "__main__":
         # input()
         # for file in range(31):
         for file in files:
+            counter += 1
             filepath = (path + "/" + file)
-            print("\n\nFile " + filepath)
-            data[file] = []
+            print("\n\nFile " + filepath + ". Remaining: " + str(len(files) - counter))
+            if file not in data:
+                data[file] = []
             for num in range(1, 33):
                 print("Technique n°: " + str(num))
                 recursion = ""

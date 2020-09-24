@@ -41,7 +41,7 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
                                                        args=(pickle.dumps(self.formula),
                                                              [first_literal, False],
                                                              {},
-                                                             self.counter,
+                                                             0,
                                                              pickle.dumps(OrderedDict()),
                                                              "")))
                 num_threads.value += 1
@@ -50,14 +50,14 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
                                                        args=(pickle.dumps(self.formula),
                                                              [first_literal, False],
                                                              {},
-                                                             self.counter,
+                                                             0,
                                                              pickle.dumps(OrderedDict()),
                                                              "")))
                 threads.append(multiprocessing.Process(target=self.cdcl_recursive,
                                                        args=(pickle.dumps(self.formula),
                                                              [first_literal, True],
                                                              {},
-                                                             self.counter,
+                                                             0,
                                                              pickle.dumps(OrderedDict()),
                                                              "")))
                 num_threads.value += 2

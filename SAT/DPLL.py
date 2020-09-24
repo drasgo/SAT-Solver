@@ -19,9 +19,9 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         self.starting_time = time.perf_counter()
         first_literal = self.choose_branching(self.formula)
 
-        flag = self.dpll_recursive(pickle.dumps(self.formula), [first_literal, False], {}, self.counter)
+        flag = self.dpll_recursive(pickle.dumps(self.formula), [first_literal, False], {}, 0)
         if flag is False:
-            flag = self.dpll_recursive(pickle.dumps(self.formula),[first_literal, True], {}, self.counter)
+            flag = self.dpll_recursive(pickle.dumps(self.formula),[first_literal, True], {}, 0)
 
         flag = self.counter_proof()
 
@@ -35,7 +35,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         # Used for keeping track of the current recursion index
         recursion_index += 1
         # Counter for total number of recursions
-        self.counter = recursion_index
+        self.counter += 1
         # Create a new formula from the string disjunctions
         new_formula = pickle.loads(formula)
         assert isinstance(new_formula, Formula)

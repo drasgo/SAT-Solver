@@ -33,8 +33,10 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         self.result = multiprocessing.Manager().dict()
         print("Starting.")
 
-        thread1 = multiprocessing.Process(target=self.dpll_recursive, args=(pickle.dumps(self.formula), [first_literal, False], {}, self.counter))
-        thread2 = multiprocessing.Process(target=self.dpll_recursive, args=(pickle.dumps(self.formula), [first_literal, True], {}, self.counter))
+        thread1 = multiprocessing.Process(target=self.dpll_recursive, args=(pickle.dumps(self.formula),
+                                                                            [first_literal, False], {}, 0))
+        thread2 = multiprocessing.Process(target=self.dpll_recursive, args=(pickle.dumps(self.formula),
+                                                                            [first_literal, True], {}, 0))
         threads_available.value -= 2
 
         thread1.start()
