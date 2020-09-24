@@ -42,8 +42,10 @@ class Base_SAT_Heuristic_Solver:
                 self.result[elem] = False
         if self.formula.compute_formula(self.result) is True:
             print("Good counter proof")
+            return True
         else:
             print("fuck")
+            return False
 
     @staticmethod
     def check_tautology(formula):

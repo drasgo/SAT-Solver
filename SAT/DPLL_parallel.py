@@ -61,7 +61,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         self.max_num_threads = num_threads.value
         self.counter = num_recursion.value
         final_flag = True if flag.value == 1 else False
-        self.counter_proof()
+        final_flag = self.counter_proof()
         print("Finished lookup.\n")
         self.summary_information(final_flag)
         return final_flag

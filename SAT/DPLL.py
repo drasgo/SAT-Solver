@@ -23,7 +23,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         if flag is False:
             flag = self.dpll_recursive(pickle.dumps(self.formula),[first_literal, True], {}, self.counter)
 
-        self.counter_proof()
+        flag = self.counter_proof()
 
         print("Finished lookup.\n")
         self.summary_information(flag)

@@ -83,7 +83,7 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
         self.counter = num_recursion.value
         self.result = result
         final_flag = True if flag.value == 1 else False
-        self.counter_proof()
+        final_flag = self.counter_proof()
         print("Finished lookup.\n")
         self.summary_information(final_flag)
         return final_flag

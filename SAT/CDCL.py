@@ -26,7 +26,7 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
             flag = self.cdcl_recursive(pickle.dumps(self.formula), [first_literal, True], {}, self.counter,
                                        pickle.dumps(OrderedDict()))
 
-        self.counter_proof()
+        flag = self.counter_proof()
 
         print("Finished lookup.\n")
         self.summary_information(flag)
