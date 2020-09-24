@@ -64,7 +64,7 @@ if __name__ == "__main__":
                     continue
                 data[file].append({
                     'technique': f'S{num}',
-                    'implementation': 'linear',
+                    'implementation': "linear" if num < 17 else "parallel",
                     'time': time,
                     'recursion': recursion,
                     'backtracks': backtracking,
