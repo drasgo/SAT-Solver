@@ -65,9 +65,9 @@ class CDCL_Solver(Base_SAT_Heuristic_Solver):
         for thread in threads:
             thread.start()
 
-        while any(thread.is_alive() for thread in threads) and flag.value is False:
+        while any(thread.is_alive() for thread in threads) and flag.value == 0:
             pass
-        if flag.value is True:
+        if flag.value == 1:
             for th in [thread for thread in threads if thread.is_alive()]:
                 parent = psutil.Process(th.pid)
                 for child in parent.children(recursive=True):

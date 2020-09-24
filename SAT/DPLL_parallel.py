@@ -15,16 +15,17 @@ flag = multiprocessing.Value("i", 0)
 num_recursion = multiprocessing.Value("i", 0)
 num_backtracking = multiprocessing.Value("i",0)
 num_threads = multiprocessing.Value("i", 2)
+threads_available = multiprocessing.Value("i", MAX_THREADS)
 class DPLL_Solver(Base_SAT_Heuristic_Solver):
     def __init__(self, formula, branching: str = ""):
         self.lock = multiprocessing.Lock()
-        self.threads_available = multiprocessing.Value = MAX_THREADS
         super().__init__(formula, branching)
 
     def compute(self) -> bool:
         """
         Computes DPLL algorithm with parallel implementation
         """
+        global threads_available
         self.formula = self.check_tautology(self.formula)
         self.starting_time = time.perf_counter()
         first_literal = self.choose_branching(self.formula)
@@ -33,14 +34,16 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         print("Starting.")
 
         thread1 = multiprocessing.Process(target=self.dpll_recursive, args=(pickle.dumps(self.formula), [first_literal, False], {}, self.counter))
-        thread2 = multiprocessing.Process(target=self.dpll_recursive, args=(pickle.dumps(self.formula), [first_literal, False], {}, self.counter))
-        self.threads_available -= 2
+        thread2 = multiprocessing.Process(target=self.dpll_recursive, args=(pickle.dumps(self.formula), [first_literal, True], {}, self.counter))
+        threads_available.value -= 2
 
         thread1.start()
         thread2.start()
-        while (thread1.is_alive() or thread2.is_alive()) and flag.value is False:
+        time.sleep(1)
+        while (thread1.is_alive() or thread2.is_alive()) and flag.value == 0:
             pass
-        if flag.value is True:
+        if flag.value == 1:
+            # print("out********************")
             if thread1.is_alive():
                 parent = psutil.Process(thread1.pid)
                 for child in parent.children(recursive=True):
@@ -52,15 +55,18 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
                     child.kill()
                 parent.kill()
         else:
-            if thread1.is_alive():
-                thread1.join()
-            else:
-                thread2.join()
+            # print("in****************")
+            # if thread1.is_alive():
+            thread1.join()
+            # if thread2.is_alive():
+            thread2.join()
+            # print("POst****************")
+
         self.result = result
         self.number_backtracking = num_backtracking.value
         self.max_num_threads = num_threads.value
         self.counter = num_recursion.value
-        final_flag = True if flag.value == 1 else False
+        # final_flag = True if flag.value == 1 else False
         final_flag = self.counter_proof()
         print("Finished lookup.\n")
         self.summary_information(final_flag)
@@ -74,7 +80,7 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
         global num_threads
         global result
         global flag
-
+        global threads_available
         recursion_index += 1
         num_recursion.value = max(num_recursion.value, recursion_index)
         new_formula = pickle.loads(formula)
@@ -102,7 +108,6 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
         if len(new_formula.disjunctions) == 0:
             # Check if formula is empty
-            # self.lock.acquire()
             result.update(curr_result.copy())
             flag.value = 1
             print("FOUND SOLUTION!")
@@ -116,8 +121,8 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
         next_literal = self.choose_branching(new_formula)
         self.lock.acquire()
-        if self.threads_available > 0:
-            self.threads_available -= 1
+        if threads_available.value > 0:
+            threads_available.value -= 1
             self.lock.release()
             num_threads.value += 1
             thread1 = multiprocessing.Process(target=self.dpll_recursive,
@@ -133,14 +138,15 @@ class DPLL_Solver(Base_SAT_Heuristic_Solver):
 
         if self.dpll_recursive(pickle.dumps(new_formula), [next_literal, True], curr_result.copy(), recursion_index) is True:
             return True
-        elif thread is True:
+
+        if thread is True:
             try:
-                while thread1.is_alive() and flag.value == 1:
+                while thread1.is_alive() and flag.value == 0:
                     pass
                 if thread1.is_alive():
                     thread1.terminate()
                 thread1.join()
                 num_threads.value -= 1
-                self.threads_available += 1
+                threads_available.value += 1
             except UnboundLocalError:
                 pass

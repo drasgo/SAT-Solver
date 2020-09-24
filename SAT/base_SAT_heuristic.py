@@ -237,8 +237,8 @@ class Base_SAT_Heuristic_Solver:
         if conflict != "":
             return None
         temp2 = Base_SAT_Heuristic_Solver.remove_clauses(formula.disjunctions, {literal: False})
-        t1 = len(temp1)
-        t2 = len(temp2)
+        t1 = len([disj1 for disj1, disj2 in zip(temp1, formula.disjunctions) if disj1.literals != disj2.literals])
+        t2 = len(formula.disjunctions) - len(temp2)
         return t1 + t2
 
     @staticmethod
